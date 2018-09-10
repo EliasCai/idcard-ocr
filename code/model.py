@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import data_generator 
+# import data_generator 
 import keys
-import os, glob
+import os, glob, itertools
 import tensorflow as tf
 from keras import losses
 from keras import backend as K
@@ -18,7 +18,7 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras.optimizers import SGD, Adam
 from keras.models import Model
 from keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler, TensorBoard
-
+import numpy as np
 from imp import reload
 import densenet
 

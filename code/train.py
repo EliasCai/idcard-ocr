@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import data_generator 
+import data_generator_v2 as data_generator
 import keys
 import os, glob 
 import tensorflow as tf
@@ -59,7 +59,7 @@ if __name__ == '__main__':
                                      path='../corpus/address_mini.txt')
     
     
-    model_path = '../log/ocr-6308-0.04.h5'
+    model_path = '../log/ocr-6308-1.61.h5'
     
     if os.path.exists(model_path):
         model.load_weights(model_path)

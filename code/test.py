@@ -18,12 +18,12 @@ if __name__ == '__main__':
     from imp import reload
     reload(keys)
     reload(data_generator)
-    reload(model)
+    reload(models)
     
     K.clear_session()
     
     
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     
     characters = keys.alphabet[:]
     characters = characters[1:] + u'卍'
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     
     basemodel, model = models.get_model(img_h, tti.nclass)
     
-    model_path = '../log/ocr-6308-0.04.h5'
+    model_path = '../log/ocr-6308-0.16.h5'
     
     if os.path.exists(model_path):
         model.load_weights(model_path)
@@ -44,14 +44,9 @@ if __name__ == '__main__':
     test_img_paths = glob.glob(os.path.join('../output','*.jpg'))
     
     ocr_func = K.function([input_data] + [K.learning_phase()], [y_pred])
-    characters = keys.alphabet[:]
-    characters = characters[1:] + u'卍'
-    tti = data_generator.TexttoImg(characters)
-    letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
-             'abcdefghijklmnopqrstuvwxyz' + \
-             '0123456789' + \
-             '-+.~一'
-    for test_img_path in random.sample(test_img_paths,10):
+    
+
+    for test_img_path in random.sample(test_img_paths,5):
     
         img = Image.open(test_img_path)
         img_np = data_generator.prepare_img(img)

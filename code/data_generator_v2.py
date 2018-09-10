@@ -40,14 +40,21 @@ class TexttoImg():
         
         self.bg = []
         img_bg = Image.open('../background/front.jpg')
-        self.bg.append(img_bg)
+        shape = img_bg.size
+        self.bg.append(img_bg.resize(np.array(shape) * 2))
+        
         img_bg = Image.open('../background/back.jpg')
-        self.bg.append(img_bg)
-        img_bg = Image.new("RGB", (800, 800),(255,255,255)) 
+        shape = img_bg.size
+        self.bg.append(img_bg.resize(np.array(shape) * 2))
+        
+        img_bg = Image.new("RGB", (1200, 800),(255,255,255)) 
         self.bg.append(img_bg)
         
+        self.resize_method = [Image.NEAREST, Image.BILINEAR, 
+                         Image.BICUBIC, Image.LANCZOS]
+        
         self.font = []
-        self.font_size = 15
+        self.font_size = 25
         for font_path in glob.glob('../font/*'):
             # font = ImageFont.truetype("../font/STFANGSO.TTF", self.font_size)
             font = ImageFont.truetype(font_path, self.font_size)  
@@ -75,30 +82,41 @@ class TexttoImg():
     def draw_text(self, txt, mode):  
         
     #    img = Image.new("RGB", (280, 32),(255,255,255))  
+        bg = random.choice(self.bg) # 随机挑选背景
+        bgsize = bg.size
+        font = random.choice(self.font) # 随机挑选字体
+        fontsize = font.getsize(txt)
+        frac = 1.01 + random.random() / 8
+        cropsize = tuple((np.array(fontsize) * frac).astype(np.int))
+        
+        random_xmin = random.randint(0,bgsize[0] - cropsize[0])
+        random_ymin = random.randint(0,bgsize[1] - cropsize[1])
+
+        img = bg.crop((random_xmin,
+                       random_ymin,
+                       random_xmin + cropsize[0],
+                       random_ymin + cropsize[1]))
+        # print(fontsize, cropsize, txt)               
+        draw = ImageDraw.Draw(img)
+        
+        random_xmin = random.randint(0,img.size[0] - fontsize[0])
+        random_ymin = random.randint(0,img.size[1] - fontsize[1])    
+        draw.text((random_xmin, random_ymin), 
+                  txt, font=font, fill=(0,0,0))  
+        img = img.convert('L')
+        
         if mode == 'train':
-            bg = random.choice(self.bg) # 随机挑选背景
-            font = random.choice(self.font) # 随机挑选字体
-            img = bg.crop((10,10,len(txt)*self.font_size + 10,30))
-            draw = ImageDraw.Draw(img)  
-            draw.text((0, 0), txt, font=font, fill=(0,0,0))  
             degree = np.random.randint(-3,3)
-            img = img.rotate(degree, expand=False)
-            img = img.resize((280,32))
-            img = img.convert('L')
-            img.save("../output/%s.jpg"%txt)
+            img = img.rotate(degree, expand=True)
+            img = img.resize((280,32), 
+                             np.random.choice(self.resize_method))
+            # img.save("../output/%s.jpg"%txt)
             img_np = np.array(img).astype(np.float32)
             img_np = np.expand_dims(img_np,2)
             noise = np.random.normal(0,0.5,img_np.shape)
             img_np = img_np + noise
         else:
-            bg = self.bg[2] # 白色背景
-            font = random.choice(self.font) # 随机挑选字体
-            img = bg.crop((10,10,len(txt)*self.font_size + 10,30))
-            draw = ImageDraw.Draw(img)  
-            draw.text((0, 0), txt, font=font, fill=(0,0,0)) 
-            # draw.text((0, 0), 'a'+txt, font=font, fill=(0,0,0))              
-            img = img.resize((280,32))
-            img = img.convert('L')
+            img = img.resize((280,32), Image.LANCZOS)
             # img.save("../output/%s.jpg"%txt)
             img_np = np.array(img).astype(np.float32)
             img_np = np.expand_dims(img_np,2)
