@@ -58,7 +58,7 @@ class TexttoImg():
         self.letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
                       'abcdefghijklmnopqrstuvwxyz' + \
                       '0123456789' + \
-                      '-+.~一' # 容易混淆的标点符号
+                      '-+.~一    ' # 容易混淆的标点符号，并随机最多插入4个空格
         self.char_to_num = dict((char, idx+1) \
                                 for idx, char in enumerate(char_set))
         
@@ -153,8 +153,9 @@ class TexttoImg():
                             random.sample(text, 
                             random.randint(len(text) // 2,len(text))))
                 text = text[:20]
-                texts.append(text)
                 img_np = self.draw_text(text,mode=mode)
+                text = text.replace(' ','')
+                texts.append(text)
                 num_of_text = self.text_to_num(text)
                 x.append(img_np)
                 y.append(num_of_text)
