@@ -5,11 +5,10 @@
 from PIL import Image,ImageFont,ImageDraw
 import numpy as np
 import random
-import os, sys, codecs
+import os, sys, codecs, glob
 import keras.backend as K
 import keys
 from keras.preprocessing.sequence import pad_sequences
-
 
 def strQ2B(ustring): # 全角符号转半角
     ss = []
@@ -25,8 +24,16 @@ def strQ2B(ustring): # 全角符号转半角
         ss.append(rstring)
     return ''.join(ss)
 
+    
+def prepare_img(img):
 
-
+    img = img.resize((280,32))
+    img = img.convert('L')
+    img_np = np.array(img).astype(np.float32)
+    img_np = np.expand_dims(img_np,2)
+    img_np = img_np / 255. - 0.5
+    return img_np
+    
 class TexttoImg():
     
     def __init__(self, char_set):
@@ -41,12 +48,17 @@ class TexttoImg():
         
         self.font = []
         self.font_size = 15
-        font = ImageFont.truetype("../font/STFANGSO.TTF", self.font_size)  
-        self.font.append(font)
+        for font_path in glob.glob('../font/*'):
+            # font = ImageFont.truetype("../font/STFANGSO.TTF", self.font_size)
+            font = ImageFont.truetype(font_path, self.font_size)  
+            self.font.append(font)
         
         # 转成字母与数字的键值对，注意下标从1开始
         self.char_set = char_set
-        self.letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        self.letter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
+                      'abcdefghijklmnopqrstuvwxyz' + \
+                      '0123456789' + \
+                      '-+.~一' # 容易混淆的标点符号
         self.char_to_num = dict((char, idx+1) \
                                 for idx, char in enumerate(char_set))
         
@@ -54,7 +66,9 @@ class TexttoImg():
                                 for char, idx in self.char_to_num.items())
         self.num_to_char[0] = ''
         self.to_num = lambda x: self.char_to_num[x]
-        self.to_char = lambda x: self.num_to_char[x]
+        
+        # self.to_char = lambda x: self.num_to_char[x]
+        self.to_char = lambda x: self.num_to_char.get(x,'')
         
         self.nclass = max(self.num_to_char.keys()) + 2
         
@@ -80,10 +94,11 @@ class TexttoImg():
             font = random.choice(self.font) # 随机挑选字体
             img = bg.crop((10,10,len(txt)*self.font_size + 10,30))
             draw = ImageDraw.Draw(img)  
-            draw.text((0, 0), txt, font=font, fill=(0,0,0))  
+            draw.text((0, 0), txt, font=font, fill=(0,0,0)) 
+            # draw.text((0, 0), 'a'+txt, font=font, fill=(0,0,0))              
             img = img.resize((280,32))
             img = img.convert('L')
-#            img.save("../output/text.jpg")
+            # img.save("../output/%s.jpg"%txt)
             img_np = np.array(img).astype(np.float32)
             img_np = np.expand_dims(img_np,2)
         img_np = img_np / 255. - 0.5
@@ -106,9 +121,17 @@ class TexttoImg():
         lines = [strQ2B(line.encode('utf-8').decode('utf-8-sig').strip()) \
                  for line in lines] # 去掉\ufeff
         lines = [line.replace(' ','') for line in lines if len(line) > 0] # 去掉空行
-        while True:
+        new_lines = []
+        
+        for line in lines: # 去除不在字典里面的文本行
+            try:
+                self.text_to_num(line)
+            except KeyError:
+                continue
+            new_lines.append(line)
             
-            batch_lines = random.sample(lines, batch_size)
+        while True:
+            batch_lines = random.sample(new_lines, batch_size)
 #            batch_lines = lines
             yield batch_lines
             
@@ -184,10 +207,10 @@ if __name__ == '__main__':
     print(tti.nclass)
     gen_train = tti.generator_of_ctc(batch_size=32,
                                      input_shape=(32,280,1),
-                                     shuffle_text=True,
+                                     shuffle_text=False,
                                      mode='test',
                                      path='../corpus/address_mini.txt')
-    for i in range(10):
+    for i in range(5):
         inputs, outputs = next(gen_train)
     
     for k,v in inputs.items():
