@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
-
 from PIL import Image,ImageFont,ImageDraw
 import numpy as np
 import random
@@ -41,11 +38,11 @@ class TexttoImg():
         self.bg = []
         img_bg = Image.open('../background/front.jpg')
         shape = img_bg.size
-        self.bg.append(img_bg.resize(np.array(shape) * 2))
+        self.bg.append(img_bg) # .resize(np.array(shape) * 2))
         
         img_bg = Image.open('../background/back.jpg')
         shape = img_bg.size
-        self.bg.append(img_bg.resize(np.array(shape) * 2))
+        self.bg.append(img_bg) # .resize(np.array(shape) * 2))
         
         img_bg = Image.new("RGB", (1200, 800),(255,255,255)) 
         self.bg.append(img_bg)
@@ -100,26 +97,29 @@ class TexttoImg():
         draw = ImageDraw.Draw(img)
         
         random_xmin = random.randint(0,img.size[0] - fontsize[0])
-        random_ymin = random.randint(0,img.size[1] - fontsize[1])    
+        random_ymin = random.randint(0,img.size[1] - fontsize[1])
+        # print((random_xmin, random_ymin), img.size, fontsize, mode)
         draw.text((random_xmin, random_ymin), 
                   txt, font=font, fill=(0,0,0))  
         img = img.convert('L')
         
         if mode == 'train':
-            degree = np.random.randint(-3,3)
+            degree = np.random.randint(-2,2)
             img = img.rotate(degree, expand=True)
             img = img.resize((280,32), 
                              np.random.choice(self.resize_method))
-            # img.save("../output/%s.jpg"%txt)
             img_np = np.array(img).astype(np.float32)
             img_np = np.expand_dims(img_np,2)
             noise = np.random.normal(0,0.5,img_np.shape)
             img_np = img_np + noise
+            
         else:
             img = img.resize((280,32), Image.LANCZOS)
-            # img.save("../output/%s.jpg"%txt)
             img_np = np.array(img).astype(np.float32)
             img_np = np.expand_dims(img_np,2)
+            
+        # img = Image.fromarray(np.squeeze(img_np.astype(np.uint8))) 
+        # img.save("../output/%s.jpg"%txt)
         img_np = img_np / 255. - 0.5
         return img_np
     
@@ -148,7 +148,7 @@ class TexttoImg():
             except KeyError:
                 continue
             new_lines.append(line)
-            
+        print('The number of corpus is', len(new_lines))
         while True:
             batch_lines = random.sample(new_lines, batch_size)
 #            batch_lines = lines
@@ -217,17 +217,17 @@ if __name__ == '__main__':
 
     characters = keys.alphabet[:]
     characters = characters[1:] + u'卍'
-    with codecs.open('../corpus/address_mini.txt', 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-    lines = [strQ2B(line.encode('utf-8').decode('utf-8-sig').strip()) \
-             for line in lines] # 去掉\ufeff
-    lines = [line for line in lines if len(line) > 0] # 去掉空行
+    # with codecs.open('../corpus/address_mini.txt', 'r', encoding='utf-8') as f:
+            # lines = f.readlines()
+    # lines = [strQ2B(line.encode('utf-8').decode('utf-8-sig').strip()) \
+             # for line in lines] # 去掉\ufeff
+    # lines = [line for line in lines if len(line) > 0] # 去掉空行
 
     tti = TexttoImg(characters)
-    print(tti.nclass)
-    gen_train = tti.generator_of_ctc(batch_size=32,
+    print('The number of characters', tti.nclass)
+    gen_train = tti.generator_of_ctc(batch_size=16,
                                      input_shape=(32,280,1),
-                                     shuffle_text=True,
+                                     shuffle_text=False,
                                      mode='train',
                                      path='../corpus/address_mini.txt')
     for i in range(1):

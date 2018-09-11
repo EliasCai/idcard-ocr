@@ -2,12 +2,13 @@
 
 import data_generator_v2 as data_generator
 import keys
-import os, glob 
+import os, glob, sys
 import tensorflow as tf
 from keras import backend as K
 from keras.models import Model
 from keras.callbacks import EarlyStopping, ModelCheckpoint, LearningRateScheduler
-
+import numpy as np
+from PIL import Image
 from imp import reload
 import densenet
 import model as models
@@ -48,6 +49,14 @@ if __name__ == '__main__':
                                      path='../corpus/address_mini.txt')
     
     
+    
+    inputs, outputs = next(gen_train)
+    for idx, img_np in enumerate(inputs['the_input']):
+        img = np.squeeze(img_np)
+        img = (img + 0.5)*255
+        img = Image.fromarray(img.astype(np.uint8))
+        img.save('../output/%d.jpg' % idx)
+    sys.exit(0)
     model_path = '../log/ocr-6308-0.07.h5'
     
     if os.path.exists(model_path):

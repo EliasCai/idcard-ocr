@@ -2,7 +2,7 @@
 import tensorflow as tf
 import numpy as np
 import os, sys, cv2, uuid, base64, glob
-import data_generator 
+import data_generator_v2 as data_generator
 import keys
 from keras import backend as K
 from keras.models import Model
@@ -111,7 +111,7 @@ class ID_OCR(object):
             path_ckpt = '../detect/frozen_inference_graph.pb' # 模型权重
         
         if model_path is None:
-            model_path = '../log/ocr-6308-0.16.h5'
+            model_path = '../log/ocr-6308-0.26.h5'
         
         self.sess_detect, self.graph = load_detect_model(path_ckpt)
         

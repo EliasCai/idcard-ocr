@@ -1,4 +1,4 @@
-import data_generator 
+import data_generator_v2 as data_generator
 import keys
 import os, glob, itertools, random
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     
     basemodel, model = models.get_model(img_h, tti.nclass)
     
-    model_path = '../log/ocr-6308-0.16.h5'
+    model_path = '../log/ocr-6308-0.07.h5'
     
     if os.path.exists(model_path):
         model.load_weights(model_path)
