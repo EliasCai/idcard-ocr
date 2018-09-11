@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import data_generator_v2 as data_generator
+import data_generator_v4 as data_generator
 import keys
 import os, glob 
 import tensorflow as tf
@@ -18,6 +18,7 @@ img_w = 280
 
 if __name__ == '__main__':  
     
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     from imp import reload
     reload(keys)
     reload(data_generator)
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     
     K.clear_session()
     
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    
     
     characters = keys.alphabet[:]
     characters = characters[1:] + u'卍'
@@ -36,19 +37,19 @@ if __name__ == '__main__':
     basemodel, model = models.get_model(img_h, tti.nclass)
     
     gen_train = tti.generator_of_ctc(batch_size=128,
-                                     input_shape=(32,280,1),
+                                     input_shape=(32,480,1),
                                      shuffle_text=True,
                                      mode='train',
                                      path='../corpus/address_mini.txt') 
 
     gen_valid = tti.generator_of_ctc(batch_size=64,
-                                     input_shape=(32,280,1),
+                                     input_shape=(32,480,1),
                                      shuffle_text=False,
                                      mode='test',
                                      path='../corpus/address_mini.txt')
     
     
-    model_path = '../log/ocr-6308-0.07.h5'
+    model_path = '../log/ocr-6308-0.10.h5'
     
     if os.path.exists(model_path):
         model.load_weights(model_path)

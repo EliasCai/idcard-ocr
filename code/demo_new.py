@@ -2,7 +2,7 @@
 import tensorflow as tf
 import numpy as np
 import os, sys, cv2, uuid, base64, glob
-import data_generator_v2 as data_generator
+import data_generator_v3 as data_generator
 import keys
 from keras import backend as K
 from keras.models import Model
@@ -15,9 +15,9 @@ import json
 
 
 # 结果图片存储路径
-save_dir = '/data1/ID_CARD/'
+# save_dir = '/data1/ID_CARD/'
 img_h = 32
-img_w = 280
+# img_w = 280
 
 path_label = 'id_label_map.pbtxt'
 NUM_CLASSES = 90
@@ -157,12 +157,13 @@ class ID_OCR(object):
         
         for label, box in label_box.items():
             
-            box = box.resize((280,32))
+            # box = box.resize((480,32))
             box = box.convert('L')
             box.save('../output/%s.jpg'%label)
             
             # img = Image.open(test_img_path)
             img_np = data_generator.prepare_img(box)
+            print(label, img_np.shape)
             # img_np = np.expand_dims(img_np,0)
         
             num_decode = models.decode_batch(self.ocr_func, [img_np])
@@ -209,10 +210,10 @@ if __name__ == '__main__':
     front_img_paths = glob.glob('../eval_data/ID_COVER/*.jpg')
     back_img_paths = glob.glob('../eval_data/BACK_RAW/*.jpg')
     
-    img_path = front_img_paths[5]
+    img_path = front_img_paths[4]
     img_np = cv2.imread(img_path)
     
-    id_ocr = ID_OCR(model_path='../log/ocr-6308-0.16.h5')
+    id_ocr = ID_OCR(model_path='../log/ocr-6308-0.11.h5')
     
     decode_data = id_ocr.predict(img_np)
     print(decode_data)
