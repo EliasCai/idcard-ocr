@@ -2,12 +2,30 @@
 #### 用途：
 主要针对身份证的地址文字OCR，其他有文字的图片也可以，但没有文字检测的功能
 
-#### 代码介绍
+#### 文件夹介绍
 1. background：生成文字的背景图片
 2. code：代码库
 3. corpus：语料库（需要自己准备，这里上传的是一个样例）
 4. font：字体库 
 5. log：存放模型权重
+
+#### 代码说明
+```
+├── code
+│   ├── comp_face++.py （与face++的检测结果进行比较）
+│   ├── data_generator.py （数据生成器）
+│   ├── demo_new.py （将模型的输出结果用json存储）
+│   ├── densenet.py （模型的网络结构）
+│   ├── detect_ocr.py （检测及识别身份证文本）
+│   ├── gen_real.py （生成真实的身份证图片及文本）
+│   ├── id_label_map.pbtxt （文本检测的类别说明）
+│   ├── keys.py （字库）
+│   ├── model.png （模型的网络结构图）
+│   ├── model.py （编译模型并指定优化器）
+│   ├── test.py （输出生成图片的检测结果）
+│   ├── train.py （训练代码）
+│   └── train_test.py （测试训练代码）
+```
 
 #### 运行环境
 1. keras == 2.2.0
