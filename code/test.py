@@ -1,4 +1,4 @@
-import data_generator_v3 as data_generator
+import data_generator_v6 as data_generator
 import keys
 import os, glob, itertools, random, sys
 
@@ -28,12 +28,12 @@ if __name__ == '__main__':
     characters = keys.alphabet[:]
     characters = characters[1:] + u'卍'
     
-    tti = data_generator.TexttoImg(characters)
+    tti = data_generator.TexttoImg(characters, '../real')
     print(tti.nclass)
     
     basemodel, model = models.get_model(img_h, tti.nclass)
     
-    model_path = '../log/ocr-6308-0.11.h5'
+    model_path = '../log/ocr-6308-0.26.h5'
     
     if os.path.exists(model_path):
         model.load_weights(model_path)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     ocr_func = K.function([input_data] + [K.learning_phase()], [y_pred])
     
     
-    gen_train = tti.generator_of_ctc(batch_size=16,
+    gen_train = tti.generator_of_ctc(batch_size=128,
                                      input_shape=(32,280,1),
                                      shuffle_text=True,
                                      mode='train',
@@ -65,11 +65,14 @@ if __name__ == '__main__':
         text_decode = ''.join(text_decode)
         
         print(text_decode, text, text_decode==text)
-        
         img = np.squeeze(img_np)
         img = (img + 0.5)*255
         img = Image.fromarray(img.astype(np.uint8))
-        img.save('../output/%s.jpg' % text_decode)
+        if not text_decode==text:
+            try:
+                img.save('../output/%s.jpg' % text_decode)
+            except:
+                continue
     sys.exit(0)
     for test_img_path in random.sample(test_img_paths,5):
     

@@ -194,6 +194,7 @@ class TexttoImg():
                     text = line
                     
                 elif style == 0:
+                    # 将地址打乱，随机取字符
                     text = line
                     text = ''.join(random.sample(text,
                                         random.randint(1,len(text))))
@@ -222,7 +223,8 @@ class TexttoImg():
                     text = ''.join(random_str)                         
                 else:
                     # 生成乱序文字
-                    random_str = random.sample(self.char_set,62)
+                    # 只选取出现次数最多的前1000个字符，为了拟合
+                    random_str = random.sample(self.char_set[:1000],62)
                     random_str = random.sample(
                         self.letter + ''.join(random_str),22)
                     text = ''.join(random_str)

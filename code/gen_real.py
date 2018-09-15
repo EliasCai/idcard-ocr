@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 import numpy as np
-import os, sys, cv2, uuid, base64, glob, codecs
+import os, sys, cv2, uuid, base64, glob, codecs, random
 import pandas as pd
 
 
@@ -14,6 +14,7 @@ import json
 def get_json_list(path):
     
     search_path = os.path.join(path, 'ID_JSON', '*.json')
+    search_path = os.path.join(path, 'BACK_JSON', '*.json')
     json_list = glob.glob(search_path)
     
     return json_list
@@ -21,6 +22,7 @@ def get_json_list(path):
 def get_img_list(path):
  
     search_path = os.path.join(path, 'ID_COVER', '*.jpg')
+    search_path = os.path.join(path, 'BACK_RAW', '*.jpg')
     img_list = glob.glob(search_path)
     
     return img_list
@@ -103,10 +105,10 @@ def ocr_from_self(json_path='../log/pred_out.json'):
         
     df = pd.DataFrame.from_dict(ocr_list)
     df['img_name'] = df['img_name'].map(lambda x: x.split('.')[0])
-    # df['id_card_number'] = df['id_card_number'].map(lambda x: x.replace('O','0').replace('x','X')) # 
-    # df['race'] = df['race'].map(lambda x: x[-1].replace('汊','汉') if len(x) > 0 else x)
-    # df['gender'] = df['gender'].map(lambda x: x.replace('民','男').replace('歹','女').replace('另','男') if len(x) > 0 else x)
-    # df['birthday'] = df['birthday'].map(update_birthday)
+    df['id_card_number'] = df['id_card_number'].map(lambda x: x.replace('O','0').replace('x','X')) # 
+    df['race'] = df['race'].map(lambda x: x[-1].replace('汊','汉') if len(x) > 0 else x)
+    df['gender'] = df['gender'].map(lambda x: x.replace('民','男').replace('歹','女').replace('另','男') if len(x) > 0 else x)
+    df['birthday'] = df['birthday'].map(update_birthday)
     return df
     
 def comp_content(df_ocr1, df_ocr2):
@@ -128,7 +130,15 @@ def get_model():
     # output = a.predict(img_np, basemodel)
     # print(output)
     return model, recog_model
-            
+
+def resize_img(img, resize_method=Image.LANCZOS):
+    
+    # shape = img.size
+    frac = 32 / img.size[1]
+    resize_x = int(frac * img.size[0])
+    # print(resize_x)
+    return img.resize((resize_x, 32), resize_method)
+    
 if __name__ == '__main__':
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -142,6 +152,47 @@ if __name__ == '__main__':
     # model, recog_model = get_model()
     
     df_ocr1 = ocr_from_faceplusplus(df_face)
-    df_ocr1['birthday'] = df_ocr1['birthday'].map(lambda x: x.split('-')[0] + '年' + str(int(x.split('-')[1])) + '月' + str(int(x.split('-')[2])) + '日')
-    df_ocr2 = ocr_from_self(json_path='../log/front.json')
-    comp_content(df_ocr1, df_ocr2)
+    # df_ocr1['birthday'] = df_ocr1['birthday'].map(lambda x: x.split('-')[0] + '年' + str(int(x.split('-')[1])) + '月' + str(int(x.split('-')[2])) + '日')
+    gen_img_paths = glob.glob('../output/*.jpg')
+    for img_path in gen_img_paths : #random.sample(gen_img_paths,10):
+        match_name = os.path.basename(img_path).split('_',1)[1].replace('.jpg','')
+        match_type = os.path.basename(img_path).split('_',1)[0]
+        
+        temp = df_ocr1[df_ocr1['img_name'] == match_name]
+        # print(temp.shape)
+        if temp.shape[0] == 1:
+            if match_type == 'idnum':
+                if 'id_card_number' in temp.columns:
+                    output_name = temp['id_card_number'].tolist()[0]
+            elif match_type == 'birthday':
+                if 'birthday' in temp.columns:
+                    output_name = temp['birthday'].tolist()[0]
+            elif match_type == 'name':
+                if 'name' in temp.columns:
+                    output_name = temp['name'].tolist()[0]
+            elif match_type == 'race':
+                if 'race' in temp.columns:
+                    output_name = temp['race'].tolist()[0]
+            elif match_type == 'gender':
+                if 'gender' in temp.columns:
+                    output_name = temp['gender'].tolist()[0]
+            elif match_type == 'valid':
+                if 'valid_date' in temp.columns:
+                    output_name = temp['valid_date'].tolist()[0]
+            elif match_type == 'issued':
+                if 'issued_by' in temp.columns:
+                    output_name = temp['issued_by'].tolist()[0]
+                    
+            img = Image.open(img_path)
+            img = img.convert('L')
+            img = resize_img(img)
+            img_np = np.array(img)
+            if img_np.shape[1] < 480:
+                img_np = np.pad(img_np,((0,0),(0,480-img_np.shape[1])), 'constant', constant_values=random.randint(0,255))
+            else:
+                img_np = img_np[:,:480]
+            img = Image.fromarray(img_np)
+            img.save('../real/%s.jpg'%output_name)
+        
+
+

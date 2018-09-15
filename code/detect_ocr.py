@@ -102,7 +102,7 @@ def detect_text(sess, detection_graph, image_np):
                 points[2] = points[2] + 5
                 points[0] = points[0] - 5
                 points[3] = points[3] + 5
-                points[1] = points[1] - 5 # #
+                points[1] = points[1] - 5 
 
                 label_box[v['name']] = image.crop(points) 
     return label_box
@@ -118,15 +118,12 @@ class ID_OCR(object):
             model_path = '../log/ocr-6308-0.26.h5'
         
         self.sess_detect, self.graph = load_detect_model(path_ckpt)
-        
-        
+
         characters = keys.alphabet[:]
         characters = characters[1:] + u'卍'
         self.tti = data_generator.TexttoImg(characters)
         # print(tti.nclass)
         basemodel, model = models.get_model(img_h, self.tti.nclass)
-        
-        
     
         if os.path.exists(model_path):
             model.load_weights(model_path)
@@ -141,7 +138,7 @@ class ID_OCR(object):
 
         label_box = detect_text(self.sess_detect, self.graph, img_np)
         
-        #  结果字符串 初始化 # 
+        #  结果字符串 初始化 
         data = {}
         data['type'] = ''
         data['address'] = ''
@@ -156,57 +153,37 @@ class ID_OCR(object):
         data['else'] = ''
         
         target_box = ['name', 'gender']
-        target_num = sum([1 for k,v in label_box.items() if k in target_box]) # 
-        # print(target_num)
-        
+        target_num = sum([1 for k,v in label_box.items() if k in target_box]) 
+
         for label, box in label_box.items():
             
-            # box = box.resize((480,32))
-            # box = box
-            # box.save('../output/%s.jpg'%label)
-            
-            # img = Image.open(test_img_path)
-            img_np = data_generator.prepare_img(box.convert('L'))
-            # print(label, img_np.shape)
-            # img_np = np.expand_dims(img_np,0)
-        
+            img_np = data_generator.prepare_img(box)
             num_decode = models.decode_batch(self.ocr_func, [img_np])
             text_decode = self.tti.num_to_text(num_decode[0])
             logit = ''.join(text_decode)
-            # logit = model.predict(box, basemodel)
-            # logit = logit.replace('.', '')
-            # print(label, logit)
+            logit = logit.replace('.', '')
+
             if label in ['name', 'gender']:
                 data[label] = logit
-                # if label == 'name':
-                    # box.save('../output/name_%s'%img_name) #
-                # if label == 'gender':
-                    # box.save('../output/gender_%s'%img_name)
             if label == 'nation':
                 data['race'] = logit
-                # box.save('../output/race_%s'%img_name)
             if label == 'birthdate':
                 data['birthday'] = logit
-                # box.save('../output/birthday_%s'%img_name)
             if label == 'idnum':
                 data['id_card_number'] = logit
-                # box.save('../output/idnum_%s'%img_name)
             if label in ['address1', 'address2', 'address3']:
                 data['address'] += logit
-                # box.save('../output/address_%s'%img_name)
             if label == 'issued':
                 data['issued_by'] = logit
                 data['side'] = 'back'
-                # box.save('../output/issued_%s'%img_name)
             
             if label == 'valid':
                 data['valid_date'] = logit
                 data['side'] = 'back'
-                # box.save('../output/valid_%s'%img_name)
                 
         if data['side'] != 'back':
             data['side'] = 'front'
-        # data = json.dumps(data, ensure_ascii=False)
+        data = json.dumps(data, ensure_ascii=False)
         return data
         
 if __name__ == '__main__':
@@ -224,26 +201,13 @@ if __name__ == '__main__':
     back_img_paths = glob.glob('/data/1808_face-plus-plus/BACK_RAW/*.jpg')
     
     img_path = front_img_paths[12]
-    img_path = back_img_paths[4]
+    # img_path = back_img_paths[4]
     
     print('Num of front image =', len(front_img_paths))
     
     id_ocr = ID_OCR(model_path='../log/ocr-6308-0.56.h5')
-    
-    with codecs.open('../log/front.json','w',encoding='utf-8') as f:
-        for idx, img_path in enumerate(random.sample(front_img_paths,500)):
-            img_np = cv2.imread(img_path)
-            img_name = os.path.basename(img_path)
-            decode_data = id_ocr.predict(img_np, img_name)
-            decode_data['img_name'] = img_name
-            print(idx)
-            decode_data = json.dumps(decode_data,ensure_ascii=False)
-            f.write(decode_data + '\n') # 
+
+    img_np = cv2.imread(img_path)
+    decode_data = id_ocr.predict(img_np)
+    print(decode_data)        
         
-    # with codecs.open('../log/pred_out.json','r',encoding='utf-8') as f:
-        # while True:
-            # try:
-                # test_json = json.loads(f.readline())
-                # print(test_json)
-            # except:
-                # break

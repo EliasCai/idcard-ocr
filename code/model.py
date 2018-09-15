@@ -83,7 +83,7 @@ if __name__ == '__main__':
     gen_train = tti.generator_of_ctc(batch_size=128,
                                      input_shape=(32,280,1),
                                      shuffle_text=True,
-                                     mode='Train',
+                                     mode='train',
                                      path='../corpus/address_mini.txt') 
 
     gen_valid = tti.generator_of_ctc(batch_size=64,
