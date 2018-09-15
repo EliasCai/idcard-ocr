@@ -63,6 +63,10 @@ def enhance_img(image, mode, filter_method, resize_method):
             img = img.filter(fm(degree))
         
         img = img.convert('L')
+        if random.choice([True, False]): # 随机把图像进行反转
+            img_np = np.array(img)
+            img_np = 255 - img_np
+            img = Image.fromarray(img_np)
         degree = random.randint(-3,3) * random.random()
         img = img.rotate(degree, expand=True)
         # img = resize_img(img, np.random.choice(self.resize_method))
